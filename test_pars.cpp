@@ -49,55 +49,47 @@ void search_for_links_in_list(GumboNode* node, std::vector <Product> & products)
 {
     if (node->type != GUMBO_NODE_ELEMENT) return ;
 
-    // Ищем элементы <div> с классом "list"
-    //GumboAttribute* div_class;
-   /* if (node->v.element.tag == GUMBO_TAG_DIV &&
-        (div_class = gumbo_get_attribute(&node->v.element.attributes, "class")) &&
-        std::string(div_class->value).find("f_zthV9b- css-0") != std::string::npos) {*/
-    
     if (node->v.element.tag == GUMBO_TAG_HEAD) return;
 
-        // Внутри <div class="list"> ищем <a class="link link-hover">
-        GumboVector* children = &node->v.element.children;
-        for (unsigned int i = 0; i < children->length; ++i) {
-            GumboNode* child = static_cast<GumboNode*>(children->data[i]);
-            if (child->v.element.tag == GUMBO_TAG_HEAD) continue;
-            if (child->type == GUMBO_NODE_ELEMENT && child->v.element.tag == GUMBO_TAG_DIV) {
-                GumboAttribute* p_attr = gumbo_get_attribute(&child->v.element.attributes, "class");
-                Product prod;
-                prod.name = " ";
-                std::string cp1251_text = " ";
-                std::string price;
-                if (p_attr && std::string(p_attr->value).find("card-name") != std::string::npos)
+    // Внутри <div class="list"> ищем <a class="link link-hover">
+    GumboVector* children = &node->v.element.children;
+    for (unsigned int i = 0; i < children->length; ++i) {
+        GumboNode* child = static_cast<GumboNode*>(children->data[i]);
+        if (child->v.element.tag == GUMBO_TAG_HEAD) continue;
+        if (child->type == GUMBO_NODE_ELEMENT && child->v.element.tag == GUMBO_TAG_DIV) {
+            GumboAttribute* p_attr = gumbo_get_attribute(&child->v.element.attributes, "class");
+            Product prod;
+            prod.name = " ";
+            std::string cp1251_text = " ";
+            std::string price;
+            if (p_attr && std::string(p_attr->value).find("card-name") != std::string::npos)
+            {
+                // Получаем текст внутри элемента <a>
+                if (child->v.element.children.length > 0) 
                 {
-                    // Получаем текст внутри элемента <a>
-                    if (child->v.element.children.length > 0) 
+                    GumboNode* text_node = static_cast<GumboNode*>(child->v.element.children.data[0]);
+                    if (text_node->type == GUMBO_NODE_TEXT) 
                     {
-                        GumboNode* text_node = static_cast<GumboNode*>(child->v.element.children.data[0]);
-                        if (text_node->type == GUMBO_NODE_TEXT) 
-                        {
-                            std::string utf8_text = text_node->v.text.text;
-                            cp1251_text = utf8_to_cp1251(utf8_text);
-                            std::cout << cp1251_text << std::endl;
-                            prod.name = cp1251_text;
-                            products.push_back(prod);
-                        }
-                    }
-                }
-                if (p_attr && std::string(p_attr->value).find("basic nw") != std::string::npos)
-                {
-                    GumboAttribute* price_attr = gumbo_get_attribute(&child->v.element.attributes, "data-price");
-                    if (price_attr->name == std::string("data-price")) {
-                        std::cout << "data-price: " << price_attr->value << std::endl;
-                        products.at(products.size() - 1).price = price_attr->value;
+                        std::string utf8_text = text_node->v.text.text;
+                        cp1251_text = utf8_to_cp1251(utf8_text);
+                        std::cout << cp1251_text << std::endl;
+                        prod.name = cp1251_text;
+                        products.push_back(prod);
                     }
                 }
             }
+            if (p_attr && std::string(p_attr->value).find("basic nw") != std::string::npos)
+            {
+                GumboAttribute* price_attr = gumbo_get_attribute(&child->v.element.attributes, "data-price");
+                if (price_attr->name == std::string("data-price")) {
+                    std::cout << "data-price: " << price_attr->value << std::endl;
+                    products.at(products.size() - 1).price = price_attr->value;
+                }
+            }
         }
-    //}
+    }
 
     // Рекурсивно обрабатываем дочерние узлы
-    // GumboVector* children = &node->v.element.children;
     for (unsigned int i = 0; i < children->length; ++i) {
         search_for_links_in_list(static_cast<GumboNode*>(children->data[i]), products);
     }
